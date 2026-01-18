@@ -9,7 +9,7 @@ Simple C programs.
 - [make](https://www.gnu.org/software/make/)
 - [bear](https://github.com/rizsotto/Bear)
 
-### Usage
+## Usage
 Unless specified (check the readme in the program directory), this is the common way to build and run all of the programs in this repo.
 
 ### Build and Run
