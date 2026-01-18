@@ -2,7 +2,7 @@
 Simple C programs.
 
 ## Pre-requisites
-NOTE: The programs in this repo are primarily for linux, so the following programs are mostly only available on linux
+> **NOTE**: The programs in this repo are primarily for linux, so the following programs are mostly only available on linux
 
 ### Configuring, Building, and Running
 - [gcc](https://gcc.gnu.org/)
