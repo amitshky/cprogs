@@ -30,10 +30,12 @@ int main(int argc, char** argv) {
 
     // parse args
     for (int i = 1; i < argc; ++i) {
-        char num[33] = {}; // to store the number part of the arg (eg: store 45 from 45h)
+        // to store the number part of the arg (eg: store 45 from 45h)
+        char num[33] = {};
         for (int j = 0; argv[i][j] != '\0' ; ++j) {
             if (j > 32) {
-                fprintf(stderr, "ERROR: Argument %d is too long. [Max length: 32]\n", i);
+                fprintf(stderr,
+                    "ERROR: Argument %d is too long. [Max length: 32]\n", i);
                 exit(1);
             }
 
