@@ -4,7 +4,7 @@ Simple C programs.
 ## Pre-requisites
 > **NOTE**: The programs in this repo are primarily for linux, so the following programs are mostly only available on linux
 
-### Configuring, Building, and Running
+### Build and Configure
 - [gcc](https://gcc.gnu.org/)
 - [make](https://www.gnu.org/software/make/)
 - [bear](https://github.com/rizsotto/Bear)
