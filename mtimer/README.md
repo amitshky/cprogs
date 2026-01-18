@@ -2,7 +2,7 @@
 A simple CLI countdown timer written in c.
 
 ## Usage
-- After building (see [readme](../README.md#configuring-building-and-running))
+- After building (see [readme](../README.md#usage))
 ```sh
 ./build/mtimer 3h 45m 30s
 ```
