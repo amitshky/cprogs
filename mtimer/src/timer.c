@@ -11,13 +11,13 @@ float elapsed_percent(const timer t) {
 }
 
 void generate_progress_bar(const timer t, const float percent) {
-    int iter = t.bar_len * (percent / 100.0f);
+    uint32_t iter = t.bar_len * (percent / 100.0f);
 
-    for (int i = 0; i < iter; ++i) {
+    for (uint32_t i = 0; i < iter; ++i) {
         t.progress_bar[i] = L'█';
     }
 
-    for (int i = iter; i < t.bar_len; ++i) {
+    for (uint32_t i = iter; i < t.bar_len; ++i) {
         t.progress_bar[i] = L'▒';
     }
 

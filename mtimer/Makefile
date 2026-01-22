@@ -8,7 +8,7 @@ include_dir = -I$(src_dir)
 src = $(shell find $(src_dir) -type f -name *.c)
 out_file = $(build_dir)/$(proj_name)
 
-cflags := -Wall -Werror
+cflags := -Wall -Wextra -Werror
 cver := -std=c23
 libflags := -lm
 dbg_def := -D_DEBUG
@@ -18,7 +18,7 @@ default: config run
 
 # generate compile_commands.json and build project
 config:
-	bear -- make build
+	bear -- $(MAKE) build
 
 # check if build directory exists, create if it doesn't
 builddir:
@@ -43,7 +43,7 @@ run:
 	./$(out_file) 3h 57m 10s
 
 clean:
-	rm -r $(build_dir)
+	rm -rf $(build_dir)
 
 clean_proj:
-	rm -r $(build_dir) .cache compile_commands.json
+	rm -rf $(build_dir) .cache compile_commands.json
