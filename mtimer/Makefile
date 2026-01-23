@@ -5,7 +5,7 @@ build_dir := build
 install_dir := /usr/local/bin
 include_dir = -I$(src_dir)
 
-src = $(shell find $(src_dir) -type f -name *.c)
+src = $(shell find $(src_dir) -type f -wholename "$(src_dir)/*.c")
 out_file = $(build_dir)/$(proj_name)
 
 cflags := -Wall -Wextra -Werror

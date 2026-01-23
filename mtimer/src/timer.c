@@ -49,7 +49,7 @@ void calc_hms(timer* const t) {
     // 3h 37m 01s to 3h 36m 60s
     // this happens when rounding off values like 0.99999
     // eg: if t.time = 13020 seconds then f_hr = 3.616667 and f_min = 36.999992
-    //     which means t.s = 60
+    //     which means t.s = 60 (because of roundf())
     if (t->s == 60) {
         t->s = 0;
         ++t->m;
