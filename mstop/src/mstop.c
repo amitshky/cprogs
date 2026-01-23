@@ -63,7 +63,7 @@ void* print_stopwatch(void* p_state) {
 
         sleep(1);
 
-        // printing this after the sleep because
+        // printing this after sleep because
         // there is a print before the while loop
         if (state->running) {
             print_time_format(tf);

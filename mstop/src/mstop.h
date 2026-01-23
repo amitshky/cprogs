@@ -1,4 +1,5 @@
 #ifndef MSTOP_H
+#define MSTOP_H
 
 #include <stdint.h>
 

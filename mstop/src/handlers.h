@@ -1,4 +1,5 @@
 #ifndef HANDLERS_H
+#define HANDLERS_H
 
 #include <termios.h>
 
