@@ -5,12 +5,12 @@ build_dir := build
 install_dir := /usr/local/bin
 include_dir = -I$(src_dir)
 
-src = $(shell find $(src_dir) -type f -name *.c)
+src = $(shell find $(src_dir) -type f -wholename "$(src_dir)/*.c")
 out_file = $(build_dir)/$(proj_name)
 
 cflags := -Wall -Wextra -Werror
 cver := -std=c23
-libflags := -lm
+libflags := -lm -lpthread
 dbg_def := -D_DEBUG
 
 
@@ -18,7 +18,7 @@ default: config run
 
 # generate compile_commands.json and build project
 config:
-	bear -- make build
+	bear -- $(MAKE) build
 
 # check if build directory exists, create if it doesn't
 builddir:
