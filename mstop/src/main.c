@@ -54,13 +54,13 @@ int main(void) {
     };
 
     pthread_t th_input = {};
-    pthread_t th_stopwatch = {};
+    pthread_t th_stopw = {};
 
-    TH_CHECK(pthread_create(&th_input, NULL, handle_input, (void*)&state))
-    TH_CHECK(pthread_create(&th_stopwatch, NULL, print_stopwatch, (void*)&state))
+    TH_CHECK(pthread_create(&th_input, NULL, handle_input,    (void*)&state))
+    TH_CHECK(pthread_create(&th_stopw, NULL, print_stopwatch, (void*)&state))
 
     pthread_join(th_input, NULL);
-    pthread_join(th_stopwatch, NULL);
+    pthread_join(th_stopw, NULL);
 
     printf("\n");
     return 0;

@@ -2,6 +2,7 @@
 #define MSTOP_H
 
 #include <stdint.h>
+#include <stdatomic.h>
 
 typedef struct {
     uint32_t hr;
@@ -12,12 +13,12 @@ typedef struct {
 } time_format;
 
 typedef struct {
-    uint8_t running: 1; // is program running
-    uint8_t paused : 1; // is stopwatch paused
-    uint8_t stopped: 1; // start/stop stopwatch
+    atomic_bool running; // is program running
+    atomic_bool paused; // is stopwatch paused
+    atomic_bool stopped; // is stopwatch stopped
 } program_state;
 
-void calc_hms(time_format* tf);
+void calc_hms(time_format* const tf);
 
 void* print_stopwatch(void* p_state);
 

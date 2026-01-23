@@ -11,16 +11,10 @@
 extern struct termios old_term_state;
 
 void* handle_input(void* p_state) {
-    program_state* state = (program_state*)p_state;
-    char ch = '\0';
+    program_state* const state = (program_state*)p_state;
+    char ch = {};
 
-    while (true) {
-        // read 1 character
-        if (read(STDIN_FILENO, &ch, 1) == -1) {
-            perror("Error: Failed to read input!\n");
-            exit(1);
-        }
-
+    while (read(STDIN_FILENO, &ch, 1) > 0) {
         // quit
         if (ch == 'q') {
             state->running = false;
