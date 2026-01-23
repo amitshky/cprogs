@@ -1,27 +1,75 @@
 #include "mstop.h"
 
-#include "math.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include <pthread.h>
+#include <unistd.h>
 
-watch calc_hms(const uint32_t sec) {
-    watch w = {};
-    const float f_hr = sec / 3600.0f;
-    w.hr = (uint32_t)f_hr;
+void calc_hms(time_format* tf) {
+    /*++tf->ms;*/
+    /**/
+    /*if (tf->ms != 1000)*/
+    /*    return;*/
 
-    const float f_min = (f_hr - w.hr) * 60.0f;
-    w.min = (uint32_t)f_min;
+    /*tf->ms = 0;*/
+    /*++tf->ds;*/
+    /**/
+    /*if (tf->ds != 100)*/
+    /*    return;*/
 
-    w.sec = (uint32_t)roundf((f_min - w.min) * 60.0f);
+    tf->ds = 0;
+    ++tf->sec;
 
-    // to avoid cases like this
-    // 3h 37m 01s to 3h 36m 60s
-    // this happens when rounding off values like 0.99999
-    // eg: if sec = 13020 seconds then f_hr = 3.616667 and f_min = 36.999992
-    //     which means w.sec = 60 (beause of roundf())
-    if (w.sec == 60) {
-        w.sec = 0;
-        ++w.min;
-    }
+    if (tf->sec != 60)
+        return;
 
-    return w;
+    tf->sec = 0;
+    ++tf->min;
+
+    if (tf->min != 60)
+        return;
+
+    ++tf->hr;
+    tf->min = 0;
 }
 
+void print_time_format(const time_format tf) {
+    printf("\r%02u:%02u:%02u.%02u", tf.hr, tf.min, tf.sec, tf.ds);
+    fflush(stdout);
+}
+
+void* print_stopwatch(void* p_state) {
+    program_state* state = (program_state*)p_state;
+
+    time_format tf = {};
+    print_time_format(tf);
+
+    while (state->running) {
+        if (state->stopped) {
+            tf = (time_format){};
+            print_time_format(tf);
+            continue;
+        }
+
+        if (state->paused) {
+            continue;
+        }
+
+        // if the stopwatch was stopped when this thread
+        // was asleep, don't print the time format
+        if (state->running) {
+            calc_hms(&tf);
+        }
+
+        sleep(1);
+
+        // printing this after the sleep because
+        // there is a print before the while loop
+        if (state->running) {
+            print_time_format(tf);
+        }
+    }
+
+    pthread_exit(NULL);
+    return NULL;
+}

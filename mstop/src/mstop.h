@@ -6,14 +6,18 @@ typedef struct {
     uint32_t hr;
     uint32_t min;
     uint32_t sec;
-} watch;
+    uint32_t ds;
+    uint32_t ms;
+} time_format;
 
 typedef struct {
-    uint8_t running: 1;
-    uint8_t paused : 1;
-    uint8_t reset  : 1;
+    uint8_t running: 1; // is program running
+    uint8_t paused : 1; // is stopwatch paused
+    uint8_t stopped: 1; // start/stop stopwatch
 } program_state;
 
-watch calc_hms(const uint32_t sec);
+void calc_hms(time_format* tf);
+
+void* print_stopwatch(void* p_state);
 
 #endif // MSTOP_H

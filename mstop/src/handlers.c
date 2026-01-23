@@ -10,24 +10,30 @@
 
 extern struct termios old_term_state;
 
-void* handle_input(void* state) {
+void* handle_input(void* p_state) {
+    program_state* state = (program_state*)p_state;
     char ch = '\0';
-    // read 1 character
+
     while (true) {
+        // read 1 character
         if (read(STDIN_FILENO, &ch, 1) == -1) {
             perror("Error: Failed to read input!\n");
             exit(1);
         }
 
+        // quit
         if (ch == 'q') {
-            ((program_state*)state)->running = false;
+            state->running = false;
             break;
         }
-        else if (ch == 'p' || ch == ' ') {
-            ((program_state*)state)->paused = !((program_state*)state)->paused;
+        // start/stop
+        else if (ch == 's') {
+            state->stopped = !state->stopped;
+            state->paused = false;
         }
-        else if (ch == 'r') {
-            ((program_state*)state)->reset = true;
+        // pause/resume
+        else if ((ch == 'p' || ch == ' ') && !state->stopped) {
+            state->paused = !state->paused;
         }
     }
 
