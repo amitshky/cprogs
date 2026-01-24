@@ -1,15 +1,14 @@
 #include "handlers.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <termios.h>
 
 #include "mstop.h"
 
 extern struct termios old_term_state;
-extern pthread_mutex_t state_mutex;
 
 void* handle_input(void* p_state) {
     program_state* const state = (program_state*)p_state;

@@ -10,8 +10,7 @@ typedef struct {
     uint32_t hr;
     uint32_t min;
     uint32_t sec;
-    uint32_t ds;
-    uint32_t ms;
+    uint32_t cs;
 } time_format;
 
 typedef struct {
@@ -24,8 +23,6 @@ typedef struct {
     /*atomic_bool paused; */
     /*atomic_bool stopped;*/
 } program_state;
-
-void calc_hms(time_format* const tf);
 
 void* print_stopwatch(void* p_state);
 

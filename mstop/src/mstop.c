@@ -1,28 +1,21 @@
 #include "mstop.h"
 
 #include <stdio.h>
-#include <stdbool.h>
-#include <pthread.h>
-#include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
 
 void calc_hms(time_format* const tf) {
-    /*++tf->ms;*/
-    /*if (tf->ms != 1000)*/
-    /*    return;*/
-    /*tf->ms = 0;*/
-
-    /*++tf->ds;*/
-    /*if (tf->ds != 100)*/
-    /*    return;*/
-    /*tf->ds = 0;*/
+    if (tf->cs < 100)
+        return;
+    tf->cs = 0;
 
     ++tf->sec;
-    if (tf->sec != 60)
+    if (tf->sec < 60)
         return;
     tf->sec = 0;
 
     ++tf->min;
-    if (tf->min != 60)
+    if (tf->min < 60)
         return;
     tf->min = 0;
 
@@ -30,8 +23,13 @@ void calc_hms(time_format* const tf) {
 }
 
 void print_time_format(const time_format tf) {
-    printf("\r%02u:%02u:%02u.%02u", tf.hr, tf.min, tf.sec, tf.ds);
+    printf("\r%02u:%02u:%02u.%02u", tf.hr, tf.min, tf.sec, tf.cs);
     fflush(stdout);
+}
+
+// get unix timestamp in centiseconds
+uint64_t get_csec(const struct timeval ts) {
+    return (uint64_t)(ts.tv_sec * 100) + (uint64_t)(ts.tv_usec * 1e-4f);
 }
 
 void* print_stopwatch(void* p_state) {
@@ -40,6 +38,12 @@ void* print_stopwatch(void* p_state) {
     time_format tf = {};
     print_time_format(tf);
 
+    struct timeval tval = {
+        .tv_usec = 1,
+    };
+    gettimeofday(&tval, NULL);
+    uint64_t timestamp_cs = get_csec(tval);
+
     while (true) {
         pthread_mutex_lock(&state->mutex);
         bool running = state->running;
@@ -47,8 +51,9 @@ void* print_stopwatch(void* p_state) {
         bool stopped = state->stopped;
         pthread_mutex_unlock(&state->mutex);
 
-        if (!running)
+        if (!running) {
             break;
+        }
 
         if (stopped) {
             tf = (time_format){};
@@ -60,8 +65,19 @@ void* print_stopwatch(void* p_state) {
             continue;
         }
 
+        gettimeofday(&tval, NULL);
+        const uint64_t timestamp_cs2 = get_csec(tval);
+        const uint64_t tick = timestamp_cs2 - timestamp_cs;
+        timestamp_cs = timestamp_cs2;
+        tf.cs += tick;
+
         calc_hms(&tf);
-        sleep(1);
+
+        struct timespec tspec = {
+            .tv_nsec = 1e7, // 10^7ns = 1cs
+        };
+        nanosleep(&tspec, NULL);
+
         print_time_format(tf);
     }
 

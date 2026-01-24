@@ -1,8 +1,6 @@
 #ifndef HANDLERS_H
 #define HANDLERS_H
 
-#include <termios.h>
-
 void* handle_input(void* p_state);
 
 void handle_sigint();
