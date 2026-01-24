@@ -38,6 +38,9 @@ void* print_stopwatch(void* p_state) {
     time_format tf = {};
     print_time_format(tf);
 
+    // using unix timestamp to get more accurate timings
+    // becuase the stopwatch was lagging behind when i 
+    // only used nanosleep()
     struct timeval tval = {
         .tv_usec = 1,
     };
@@ -65,14 +68,19 @@ void* print_stopwatch(void* p_state) {
             continue;
         }
 
+        // get the accurate duration by calculating how much time 
+        // has actually passed
         gettimeofday(&tval, NULL);
         const uint64_t timestamp_cs2 = get_csec(tval);
         const uint64_t tick = timestamp_cs2 - timestamp_cs;
         timestamp_cs = timestamp_cs2;
-        tf.cs += tick;
 
+        tf.cs += tick;
         calc_hms(&tf);
 
+        // the stopwatch could be implemented without sleep,
+        // but sleep will suspend this thread becuase, the thread
+        // doesn't need to be running all the time
         struct timespec tspec = {
             .tv_nsec = 1e7, // 10^7ns = 1cs
         };
