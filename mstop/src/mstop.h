@@ -2,6 +2,8 @@
 #define MSTOP_H
 
 #include <stdint.h>
+#include <stdbool.h>
+#include <pthread.h>
 #include <stdatomic.h>
 
 typedef struct {
@@ -13,9 +15,14 @@ typedef struct {
 } time_format;
 
 typedef struct {
-    atomic_bool running; // is program running
-    atomic_bool paused; // is stopwatch paused
-    atomic_bool stopped; // is stopwatch stopped
+    bool running: 1;
+    bool paused : 1;
+    bool stopped: 1;
+    pthread_mutex_t mutex;
+
+    /*atomic_bool running;*/
+    /*atomic_bool paused; */
+    /*atomic_bool stopped;*/
 } program_state;
 
 void calc_hms(time_format* const tf);

@@ -21,7 +21,6 @@ void calc_hms(time_format* const tf) {
         return;
     tf->sec = 0;
 
-
     ++tf->min;
     if (tf->min != 60)
         return;
@@ -41,14 +40,23 @@ void* print_stopwatch(void* p_state) {
     time_format tf = {};
     print_time_format(tf);
 
-    while (state->running) {
-        if (state->stopped) {
+    while (true) {
+        pthread_mutex_lock(&state->mutex);
+        bool running = state->running;
+        bool paused = state->paused;
+        bool stopped = state->stopped;
+        pthread_mutex_unlock(&state->mutex);
+
+        if (!running)
+            break;
+
+        if (stopped) {
             tf = (time_format){};
             print_time_format(tf);
             continue;
         }
 
-        if (state->paused) {
+        if (paused) {
             continue;
         }
 
@@ -57,6 +65,5 @@ void* print_stopwatch(void* p_state) {
         print_time_format(tf);
     }
 
-    pthread_exit(NULL);
     return NULL;
 }

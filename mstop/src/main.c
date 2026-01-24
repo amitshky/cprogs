@@ -51,7 +51,10 @@ int main(void) {
         .running = true,
         .paused  = false,
         .stopped = true,
+        .mutex   = PTHREAD_MUTEX_INITIALIZER,
     };
+    
+    pthread_mutex_init(&state.mutex, NULL);
 
     pthread_t th_input = {};
     pthread_t th_stopw = {};
@@ -61,6 +64,8 @@ int main(void) {
 
     pthread_join(th_input, NULL);
     pthread_join(th_stopw, NULL);
+
+    pthread_mutex_destroy(&state.mutex);
 
     printf("\n");
     return 0;
