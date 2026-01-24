@@ -28,6 +28,9 @@ builddir:
 build: builddir
 	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) $(dbg_def) -g
 
+dbg: build
+	gdb -tui --args ./$(out_file)
+
 # release build
 release: builddir
 	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) -O3
