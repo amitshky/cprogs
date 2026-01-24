@@ -7,10 +7,10 @@
 #include <stdatomic.h>
 
 typedef struct {
-    uint32_t hr;
-    uint32_t min;
-    uint32_t sec;
-    uint32_t cs;
+    uint64_t hr;
+    uint64_t min;
+    uint64_t sec;
+    uint64_t cs;
 } time_format;
 
 typedef struct {

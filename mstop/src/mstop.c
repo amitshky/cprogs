@@ -23,7 +23,7 @@ void calc_hms(time_format* const tf) {
 }
 
 void print_time_format(const time_format tf) {
-    printf("\r%02u:%02u:%02u.%02u", tf.hr, tf.min, tf.sec, tf.cs);
+    printf("\r%02lu:%02lu:%02lu.%02lu", tf.hr, tf.min, tf.sec, tf.cs);
     fflush(stdout);
 }
 
