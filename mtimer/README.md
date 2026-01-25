@@ -1,8 +1,8 @@
 # mtimer
-A simple CLI countdown timer written in c.
+A simple CLI countdown timer written in C.
 
 ## Usage
-- After building (see [readme](../README.md#usage))
+- Build the project (see [readme](../README.md#usage)), then
 ```sh
 ./build/mtimer 3h 45m 30s
 ```

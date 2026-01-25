@@ -1,8 +1,8 @@
 # mstop
-A simple CLI stopwatch written in c.
+A simple CLI stopwatch written in C. This project uses `pthread` so it will probably not work on Windows (maybe try [this](https://stackoverflow.com/questions/2150938/can-i-get-unixs-pthread-h-to-compile-in-windows)). This project also changes the behaviour of the terminal to take input and display, so it will only work on Unix terminals (xterm, ...).
 
 ## Usage
-- After building (see [readme](../README.md#usage))
+- Build the project (see [readme](../README.md#usage)), then
 ```sh
 ./build/mstop
 ```
@@ -10,6 +10,13 @@ A simple CLI stopwatch written in c.
 <!--```sh-->
 <!--./build/mstop --help-->
 <!--```-->
+
+### Keyboard inputs
+|Key|Action|
+|:--|:--|
+|`s`|start/stop|
+|`p` or `<space>`|pause/resume|
+|`q`|quit|
 
 ## Screenshots
 <img src="../img/mstop.png" width=500>
