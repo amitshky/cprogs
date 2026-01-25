@@ -50,22 +50,44 @@ int main(void) {
     program_state state = {
         .running = true,
         .paused  = false,
-        .stopped = false,
-        .mutex   = PTHREAD_MUTEX_INITIALIZER,
+        .stopped = true,
+    };
+
+    time_format tf = {};
+
+    thread_data data = {
+        .state      = state,
+        .tf         = tf,
+        .mutex      = PTHREAD_MUTEX_INITIALIZER,
+        .cond_pause = PTHREAD_COND_INITIALIZER,
+        .cond_stop  = PTHREAD_COND_INITIALIZER,
+        .cond_sleep = PTHREAD_COND_INITIALIZER,
     };
     
-    pthread_mutex_init(&state.mutex, NULL);
+    pthread_mutex_init(&data.mutex, NULL);
+    pthread_cond_init(&data.cond_pause, NULL);
+    pthread_cond_init(&data.cond_stop, NULL);
 
-    pthread_t th_input = {};
+    // use MONOTONIC clock
+    pthread_condattr_t attr;
+    pthread_condattr_init(&attr);
+    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+    pthread_cond_init(&data.cond_sleep, &attr);
+    pthread_condattr_destroy(&attr);
+
     pthread_t th_stopw = {};
+    pthread_t th_input = {};
 
-    TH_CHECK(pthread_create(&th_stopw, NULL, print_stopwatch, (void*)&state))
-    TH_CHECK(pthread_create(&th_input, NULL, handle_input,    (void*)&state))
+    TH_CHECK(pthread_create(&th_stopw, NULL, print_stopwatch, (void*)&data))
+    TH_CHECK(pthread_create(&th_input, NULL, handle_input,    (void*)&data))
 
-    pthread_join(th_input, NULL);
     pthread_join(th_stopw, NULL);
+    pthread_join(th_input, NULL);
 
-    pthread_mutex_destroy(&state.mutex);
+    pthread_cond_destroy(&data.cond_sleep);
+    pthread_cond_destroy(&data.cond_stop);
+    pthread_cond_destroy(&data.cond_pause);
+    pthread_mutex_destroy(&data.mutex);
 
     printf("\n");
     return 0;

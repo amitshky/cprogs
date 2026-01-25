@@ -10,30 +10,49 @@
 
 extern struct termios old_term_state;
 
-void* handle_input(void* p_state) {
-    program_state* const state = (program_state*)p_state;
+void* handle_input(void* p_data) {
+    thread_data* const data = (thread_data*)p_data;
     char ch = {};
 
     while (read(STDIN_FILENO, &ch, 1) > 0) {
-        pthread_mutex_lock(&state->mutex);
+        pthread_mutex_lock(&data->mutex);
 
         // quit
         if (ch == 'q') {
-            state->running = false;
-            pthread_mutex_unlock(&state->mutex);
+            data->state.running = false;
+
+            pthread_cond_signal(&data->cond_sleep);
+            pthread_cond_signal(&data->cond_stop);
+            pthread_cond_signal(&data->cond_pause);
+            pthread_mutex_unlock(&data->mutex);
             break;
         }
         // start/stop
         else if (ch == 's') {
-            state->stopped = !state->stopped;
-            state->paused = false;
+            data->state.stopped = !data->state.stopped;
+
+            // to be able to stop if paused
+            data->state.paused = false;
+            // if the thread is sleeping, signal it first,
+            // same if it is suspended by pause condition
+            pthread_cond_signal(&data->cond_sleep);
+            pthread_cond_signal(&data->cond_pause);
+
+            if (!data->state.stopped) {
+                pthread_cond_signal(&data->cond_stop);
+            }
         }
         // pause/resume
-        else if ((ch == 'p' || ch == ' ') && !state->stopped) {
-            state->paused = !state->paused;
+        else if ((ch == 'p' || ch == ' ') && !data->state.stopped) {
+            data->state.paused = !data->state.paused;
+
+            if (!data->state.paused) {
+                pthread_cond_signal(&data->cond_sleep);
+                pthread_cond_signal(&data->cond_pause);
+            }
         }
 
-        pthread_mutex_unlock(&state->mutex);
+        pthread_mutex_unlock(&data->mutex);
     }
 
     return NULL;

@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
+#include <errno.h>
 
 void calc_hms(time_format* const tf) {
+    ++tf->cs;
     if (tf->cs < 100)
         return;
     tf->cs = 0;
@@ -27,66 +29,67 @@ void print_time_format(const time_format tf) {
     fflush(stdout);
 }
 
-// get unix timestamp in centiseconds
-uint64_t get_csec(const struct timeval ts) {
-    return (uint64_t)(ts.tv_sec * 100) + (uint64_t)(ts.tv_usec * 1e-4f);
-}
+void* print_stopwatch(void* p_data) {
+    thread_data* const data = (thread_data*)p_data;
 
-void* print_stopwatch(void* p_state) {
-    program_state* const state = (program_state*)p_state;
-
-    time_format tf = {};
-    print_time_format(tf);
-
-    // using unix timestamp to get more accurate timings
-    // becuase the stopwatch was lagging behind when i 
-    // only used nanosleep()
-    struct timeval tval = {
-        .tv_usec = 1,
-    };
-    gettimeofday(&tval, NULL);
-    uint64_t timestamp_cs = get_csec(tval);
+    pthread_mutex_lock(&data->mutex);
+    print_time_format(data->tf);
+    pthread_mutex_unlock(&data->mutex);
 
     while (true) {
-        pthread_mutex_lock(&state->mutex);
-        bool running = state->running;
-        bool paused = state->paused;
-        bool stopped = state->stopped;
-        pthread_mutex_unlock(&state->mutex);
+        pthread_mutex_lock(&data->mutex);
 
-        if (!running) {
+        if (!data->state.running) {
+            pthread_mutex_unlock(&data->mutex);
             break;
         }
 
-        if (stopped) {
-            tf = (time_format){};
-            print_time_format(tf);
+        // pthread_cond_timedwait takes absolute time
+        // i.e., block thread until a certain time (timestamp)
+        struct timespec tspec = {};
+        clock_gettime(CLOCK_MONOTONIC, &tspec);
+        tspec.tv_nsec += 1e7L; // wake up 1cs from now
+        if (tspec.tv_nsec >= 1e9L) {
+            tspec.tv_sec += 1L;
+            tspec.tv_nsec -= 1e9L;
+        }
+
+        // pthread_cond_wait and pthread_cond_timedwait expects the 
+        // mutex to be locked, and they unlock the mutex after 
+        // suspending the thread, and lock the mutex before
+        // unsuspending the thread, so we have to manually unlock
+        // the mutex again
+        // doing this to avoid spurious wakeup
+        while(1) {
+            // suspend thread for 1sec (or 1cs)
+            // this can be interrupted by another thread
+            if (pthread_cond_timedwait(&data->cond_sleep, &data->mutex, &tspec)
+                    == ETIMEDOUT)
+                break;
+        }
+
+        if (data->state.stopped) {
+            // reset time
+            data->tf = (time_format){};
+            print_time_format(data->tf);
+
+            // thread wait
+            pthread_cond_wait(&data->cond_stop, &data->mutex);
+            pthread_mutex_unlock(&data->mutex);
             continue;
         }
 
-        if (paused) {
+        if (data->state.paused) {
+            // thread wait
+            pthread_cond_wait(&data->cond_pause, &data->mutex);
+            pthread_mutex_unlock(&data->mutex);
             continue;
         }
 
-        // get the accurate duration by calculating how much time 
-        // has actually passed
-        gettimeofday(&tval, NULL);
-        const uint64_t timestamp_cs2 = get_csec(tval);
-        const uint64_t tick = timestamp_cs2 - timestamp_cs;
-        timestamp_cs = timestamp_cs2;
+        calc_hms(&data->tf);
+        print_time_format(data->tf);
 
-        tf.cs += tick;
-        calc_hms(&tf);
-
-        // the stopwatch could be implemented without sleep,
-        // but sleep will suspend this thread becuase, the thread
-        // doesn't need to be running all the time
-        struct timespec tspec = {
-            .tv_nsec = 1e7, // 10^7ns = 1cs
-        };
-        nanosleep(&tspec, NULL);
-
-        print_time_format(tf);
+        pthread_mutex_unlock(&data->mutex);
     }
 
     return NULL;
