@@ -63,7 +63,7 @@ int main(void) {
         .cond_stop  = PTHREAD_COND_INITIALIZER,
         .cond_sleep = PTHREAD_COND_INITIALIZER,
     };
-    
+
     pthread_mutex_init(&data.mutex, NULL);
     pthread_cond_init(&data.cond_pause, NULL);
     pthread_cond_init(&data.cond_stop, NULL);

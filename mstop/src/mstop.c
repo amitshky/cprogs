@@ -59,14 +59,10 @@ void* print_stopwatch(void* p_data) {
         // suspending the thread, and lock the mutex before
         // unsuspending the thread, so we have to manually unlock
         // the mutex again
-        // doing this to avoid spurious wakeup
-        while(1) {
-            // suspend thread for 1sec (or 1cs)
-            // this can be interrupted by another thread
-            if (pthread_cond_timedwait(&data->cond_sleep, &data->mutex, &tspec)
-                    == ETIMEDOUT)
-                break;
-        }
+        // 
+        // suspend thread for 1sec (or 1cs)
+        // this can be interrupted by another thread
+        pthread_cond_timedwait(&data->cond_sleep, &data->mutex, &tspec);
 
         if (data->state.stopped) {
             // reset time
