@@ -12,7 +12,7 @@ Simple C programs.
 - [bear](https://github.com/rizsotto/Bear)
 
 ## Usage
-Unless specified (check the readme in the program directory), this is the common way to build and run all of the programs in this repo.
+Unless specified, this is the common way to build and run all of the programs in this repo. Check the readme in the program directory, for build/usage specific requirements for that program.
 
 ### Build and Run
 - By default, this will build and run the programs with debug symbols
@@ -20,7 +20,7 @@ Unless specified (check the readme in the program directory), this is the common
 cd <program_directory>
 make
 ```
-- To build and run in without debug symbols
+- To build and run without debug symbols
 ```sh
 cd <program_directory>
 make release
