@@ -44,6 +44,17 @@ void* print_stopwatch(void* p_data) {
             break;
         }
 
+        if (data->state.stopped) {
+            // reset time
+            data->tf = (time_format){};
+            print_time_format(data->tf);
+
+            // thread wait
+            pthread_cond_wait(&data->cond_stop, &data->mutex);
+            pthread_mutex_unlock(&data->mutex);
+            continue;
+        }
+
         // pthread_cond_timedwait takes absolute time
         // i.e., block thread until a certain time (timestamp)
         struct timespec tspec = {};
@@ -63,17 +74,6 @@ void* print_stopwatch(void* p_data) {
         // suspend thread for 1sec (or 1cs)
         // this can be interrupted by another thread
         pthread_cond_timedwait(&data->cond_sleep, &data->mutex, &tspec);
-
-        if (data->state.stopped) {
-            // reset time
-            data->tf = (time_format){};
-            print_time_format(data->tf);
-
-            // thread wait
-            pthread_cond_wait(&data->cond_stop, &data->mutex);
-            pthread_mutex_unlock(&data->mutex);
-            continue;
-        }
 
         if (data->state.paused) {
             // thread wait

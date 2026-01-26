@@ -1,5 +1,6 @@
 #include "handlers.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -61,6 +62,7 @@ void* handle_input(void* p_data) {
 // handle SIGINT (Ctrl+C)
 void handle_sigint() {
     restore_terminal();
+    printf("\n");
     exit(0);
 }
 
