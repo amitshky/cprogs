@@ -89,5 +89,5 @@ int main(int argc, char** argv) {
 }
 
 void print_usage() {
-    printf("Usage:\n\ttimer [-h|--help][<num>h][<num>m][<num>s]\n");
+    printf("Usage:\n\tmtimer [-h | --help] [ <num>h ] [ <num>m ] [ <num>s ]\n");
 }
