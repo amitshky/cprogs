@@ -10,14 +10,6 @@
 #include "handlers.h"
 #include "mstop.h"
 
-// from https://stackoverflow.com/questions/26423537/how-to-position-the-input-text-cursor-in-c
-// but only works for unix terminals (xterm, gnome-terminal, ...)???
-#define clear() printf("\033[H\033[J")
-#define move(x, y) printf("\033[%d;%dH", (y), (x))
-
-// or maybe use curses, but this i think it is overkill for this project
-// https://www.gnu.org/software/guile-ncurses/manual/html_node/The-basic-curses-library.html
-
 #define TH_CHECK(x) \
     if (x != 0) {\
         perror("Error: Failed to create thread!\n");\
@@ -41,6 +33,9 @@ int main(int argc, char** argv) {
         .stopped = true,
     };
 
+    // by default, the terminal is set to run in canonical mode without echo
+    bool normal_mode = false;
+
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             print_usage();
@@ -49,6 +44,9 @@ int main(int argc, char** argv) {
         else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--start") == 0) {
             state.stopped = false;
         }
+        else if (strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--normal") == 0) {
+            normal_mode = true;
+        }
         else {
             fprintf(stderr, "ERROR: Invalid arguments provided!\n");
             print_usage();
@@ -56,23 +54,23 @@ int main(int argc, char** argv) {
         }
     }
 
-    struct termios new_term_state = {}; 
+    if (!normal_mode) {
+        struct termios new_term_state = {}; 
+        // save terminal state
+        TC_CHECK(tcgetattr(STDIN_FILENO, &old_term_state))
+        new_term_state = old_term_state;
+        // disable canonical mode and echo
+        new_term_state.c_lflag &= ~(ICANON | ECHO);
+        // apply new state
+        TC_CHECK(tcsetattr(STDIN_FILENO, TCSANOW, &new_term_state))
 
-    // save terminal state
-    TC_CHECK(tcgetattr(STDIN_FILENO, &old_term_state))
-    new_term_state = old_term_state;
-    // disable canonical mode and echo
-    new_term_state.c_lflag &= ~(ICANON | ECHO);
-    // apply new state
-    TC_CHECK(tcsetattr(STDIN_FILENO, TCSANOW, &new_term_state))
-
-    // register exit handler
-    atexit(restore_terminal);
-    // register SIGINT handler
-    signal(SIGINT, handle_sigint);
+        // register exit handler
+        atexit(restore_terminal);
+        // register SIGINT handler
+        signal(SIGINT, handle_sigint);
+    }
 
     time_format tf = {};
-
     thread_data data = {
         .state        = state,
         .tf           = tf,
@@ -112,5 +110,17 @@ int main(int argc, char** argv) {
 }
 
 void print_usage() {
-    printf("Usage: mstop [ -h | --help ] [ -s | --start ]\n");
+    printf("USAGE:\n    mstop [ -h | --help ] [ -s | --start ] [ -n | --normal ]\n");
+    printf("\nOPTIONS:\n");
+    printf("    --start,  -s : Immediately start the stopwatch.\n");
+    printf("    --normal, -n : To run the terminal normally i.e., disable canonical\n"
+           "                   mode, and enable echo. By default, the terminal is set\n"
+           "                   to run in canonical mode without echo. With this option,\n"
+           "                   you will have to press \"ENTER\" to perform an action\n"
+           "                   after a key input. Set this option if you have a non-UNIX\n"
+           "                   terminal.\n");
+    printf("\nKEY INPUT:\n");
+    printf("    s            : start/stop\n");
+    printf("    p or <space> : pause/resume\n");
+    printf("    q            : quit\n");
 }

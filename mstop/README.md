@@ -1,15 +1,15 @@
 # mstop
-A simple CLI stopwatch written in C. This project uses `pthread` so it will probably not work on Windows (maybe try [this](https://stackoverflow.com/questions/2150938/can-i-get-unixs-pthread-h-to-compile-in-windows)). This project also changes the behaviour of the terminal to take input and display, so it will only work on Unix terminals (xterm, ...).
+A simple CLI stopwatch written in C. This project uses `pthread` so it will probably not work on Windows (maybe try [this](https://stackoverflow.com/questions/2150938/can-i-get-unixs-pthread-h-to-compile-in-windows)). This project also changes the behaviour of the terminal to take input, so by default, it will only work on Unix terminals (xterm, ...). Set the `--normal` option when running for it to work on other terminals, note that with this option, you will have to press `ENTER` after an input key press. Checkout `--help` for other options.
 
 ## Usage
 - Build the project (see [readme](../README.md#usage)), then
 ```sh
 ./build/mstop
 ```
-<!--- Help-->
-<!--```sh-->
-<!--./build/mstop --help-->
-<!--```-->
+- Help
+```sh
+./build/mstop --help
+```
 
 ### Keyboard inputs
 |Key|Action|
