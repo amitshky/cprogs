@@ -35,7 +35,7 @@ dbg: build
 release: builddir
 	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) $(cver) -O3
 
-install: release
+install: clean release
 	cp $(out_file) $(install_dir)
 	chmod 755 $(install_dir)/$(proj_name)
 
