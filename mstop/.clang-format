@@ -1,0 +1,34 @@
+BasedOnStyle: LLVM
+
+# Indentation
+IndentWidth: 4
+ContinuationIndentWidth: 4
+UseTab: Never
+
+# Line length
+ColumnLimit: 80
+
+# Braces
+BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: false
+
+# Pointers & references
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# Empty lines & blocks
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# Function formatting
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+
+# Misc
+SortIncludes: Never
+ReflowComments: false

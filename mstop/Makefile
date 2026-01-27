@@ -50,3 +50,6 @@ clean:
 
 clean_proj:
 	rm -rf $(build_dir) .cache compile_commands.json
+
+format:
+	find . -type f \( -name "*.c" -o -name "*.h" \) -exec clang-format -i {} +

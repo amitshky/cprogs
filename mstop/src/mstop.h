@@ -19,8 +19,8 @@ typedef struct {
 
 typedef struct {
     bool quit : 1;
-    bool pause: 1;
-    bool start: 1;
+    bool pause : 1;
+    bool start : 1;
 } program_state;
 
 typedef struct {
@@ -31,9 +31,9 @@ typedef struct {
     pthread_cond_t cond;
 } thread_data;
 
+void stopwatch_pause(thread_data* const data);
 void stopwatch_quit(thread_data* const data);
 void stopwatch_start(thread_data* const data);
-void stopwatch_pause(thread_data* const data);
 void* stopwatch_print(void* p_state);
 
 #endif // MSTOP_H

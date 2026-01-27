@@ -13,52 +13,78 @@
 
 struct termios old_term_state = {};
 
-static inline void th_check(int errcode) {
-    if (errcode != 0) {
+static inline void th_check(int ret) {
+    if (ret != 0) {
         perror("Error: Failed to create thread!\n");
         exit(1);
     }
 }
- 
-static inline void tc_check(int errcode) {
-    if (errcode == -1) {
+
+static inline void tc_check(int ret) {
+    if (ret == -1) {
         perror("Error: Failed to access terminal state!\n");
         exit(1);
     }
 }
 
-void print_usage();
-void handle_sigint(int sig);
-void restore_terminal();
+static inline void print_usage() {
+    printf("USAGE:\n"
+           "    mstop [OPTIONS]\n\n"
+           "OPTIONS:\n"
+           "    -h, --help   : Show this help message and exit.\n"
+           "    -s, --start  : Start the stopwatch immediately.\n"
+           "    -n, --normal : Run the terminal in normal mode (canonical\n"
+           "                   input with echo). By default, the terminal\n"
+           "                   is configured in non-canonical mode without\n"
+           "                   echo. Enabling this option requires pressing\n"
+           "                   ENTER after each key input. Use this option\n"
+           "                   if your terminal is non-UNIX or does not\n"
+           "                   support canonical mode.\n\n"
+           "KEY INPUTS:\n"
+           "    s            : Start or reset the stopwatch.\n"
+           "    p, <space>   : Pause or resume the stopwatch.\n"
+           "    q            : Quit the program.\n");
+}
+
+static inline void restore_terminal() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_term_state);
+}
+
+// handle SIGINT (Ctrl+C)
+static inline void handle_sigint(int sig) {
+    (void)sig;
+    restore_terminal();
+    printf("\n");
+    exit(0);
+}
 
 int main(int argc, char** argv) {
     thread_data data = {
-        .state = {
-            .quit  = false,
-            .pause = false,
-            .start = false,
-        },
+        .state =
+            {
+                .quit = false,
+                .pause = false,
+                .start = false,
+            },
         .watch = {},
         .mutex = PTHREAD_MUTEX_INITIALIZER,
-        .cond  = PTHREAD_COND_INITIALIZER,
+        .cond = PTHREAD_COND_INITIALIZER,
     };
 
-    // by default, the terminal is set to run in non-canonical mode without echo
     bool normal_mode = false;
 
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             print_usage();
             exit(0);
-        }
-        else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--start") == 0) {
+        } else if (strcmp(argv[i], "-s") == 0 ||
+                   strcmp(argv[i], "--start") == 0) {
             data.state.start = true;
             clock_gettime(CLOCK_MONOTONIC, &data.watch.start_time);
-        }
-        else if (strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--normal") == 0) {
+        } else if (strcmp(argv[i], "-n") == 0 ||
+                   strcmp(argv[i], "--normal") == 0) {
             normal_mode = true;
-        }
-        else {
+        } else {
             fprintf(stderr, "ERROR: Invalid arguments provided!\n");
             print_usage();
             exit(1);
@@ -66,7 +92,7 @@ int main(int argc, char** argv) {
     }
 
     if (!normal_mode) {
-        struct termios new_term_state = {}; 
+        struct termios new_term_state = {};
         // save terminal state
         tc_check(tcgetattr(STDIN_FILENO, &old_term_state));
         new_term_state = old_term_state;
@@ -111,34 +137,4 @@ int main(int argc, char** argv) {
     pthread_mutex_destroy(&data.mutex);
 
     return 0;
-}
-
-void print_usage() {
-    printf("USAGE:\n");
-    printf("    mstop [OPTIONS]\n\n");
-    printf("OPTIONS:\n");
-    printf("    -h, --help   : Show this help message and exit.\n");
-    printf("    -s, --start  : Start the stopwatch immediately.\n");
-    printf("    -n, --normal : Run the terminal in normal mode (canonical input with\n");
-    printf("                   echo). By default, the terminal is configured in\n");
-    printf("                   non-canonical mode without echo. Enabling this option\n");
-    printf("                   requires pressing ENTER after each key input. Use this\n");
-    printf("                   option if your terminal is non-UNIX or does not support\n");
-    printf("                   canonical mode.\n\n");
-    printf("KEY INPUTS:\n");
-    printf("    s            : Start or reset the stopwatch.\n");
-    printf("    p, <space>   : Pause or resume the stopwatch.\n");
-    printf("    q            : Quit the program.\n");
-}
-
-// handle SIGINT (Ctrl+C)
-void handle_sigint(int sig) {
-    (void)sig;
-    restore_terminal();
-    printf("\n");
-    exit(0);
-}
-
-void restore_terminal() {
-    tcsetattr(STDIN_FILENO, TCSANOW, &old_term_state);
 }

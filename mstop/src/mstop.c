@@ -4,25 +4,25 @@
 
 #include <stdio.h>
 #include <sys/time.h>
-#include <time.h>
 
-void calc_hms(uint64_t ms, stopwatch* const w) {
-    w->hr  = ms / 3600000;
+static inline void calc_hms(uint64_t ms, stopwatch* const w) {
+    w->hr = ms / 3600000;
     ms %= 3600000;
     w->min = ms / 60000;
     ms %= 60000;
     w->sec = ms / 1000;
-    w->ms  = ms % 1000;
+    w->ms = ms % 1000;
 }
 
-void print_time(const stopwatch w) {
+static inline void print_time(const stopwatch w) {
     printf("\r%02lu:%02lu:%02lu.%03lu", w.hr, w.min, w.sec, w.ms);
     fflush(stdout);
 }
 
-uint64_t duration_ms(const struct timespec start, const struct timespec end) {
-    return (uint64_t)((end.tv_sec - start.tv_sec) * 1000
-            + (end.tv_nsec - start.tv_nsec) * 1e-6);
+static inline uint64_t duration_ms(const struct timespec start,
+                                   const struct timespec end) {
+    return (uint64_t)((end.tv_sec - start.tv_sec) * 1000 +
+                      (end.tv_nsec - start.tv_nsec) * 1e-6);
 }
 
 void stopwatch_quit(thread_data* const data) {
@@ -87,7 +87,7 @@ void* stopwatch_print(void* p_data) {
         }
 
         clock_gettime(CLOCK_MONOTONIC, &now);
-        uint64_t displayed_ms = 
+        uint64_t displayed_ms =
             duration_ms(data->watch.start_time, now) + data->watch.elapsed_ms;
 
         calc_hms(displayed_ms, &data->watch);
@@ -96,7 +96,7 @@ void* stopwatch_print(void* p_data) {
         pthread_mutex_unlock(&data->mutex);
 
         // sleep for 1ms
-        struct timespec t = { 0, 1e6 };
+        struct timespec t = {0, 1e6};
         nanosleep(&t, NULL);
     }
 

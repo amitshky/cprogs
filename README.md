@@ -11,6 +11,9 @@ Simple C programs.
 - [make](https://www.gnu.org/software/make/)
 - [bear](https://github.com/rizsotto/Bear)
 
+### Others
+- [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
+
 ## Usage
 Unless specified, this is the common way to build and run all of the programs in this repo. Check the readme in the program directory, for build/usage specific requirements for that program.
 
