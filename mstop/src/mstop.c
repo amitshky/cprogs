@@ -1,92 +1,106 @@
 #include "mstop.h"
 
 #include <stdio.h>
-#include <time.h>
 #include <sys/time.h>
-#include <errno.h>
+#include <time.h>
 
-void calc_hms(time_format* const tf) {
-    ++tf->cs;
-    if (tf->cs < 100)
-        return;
-    tf->cs = 0;
-
-    ++tf->sec;
-    if (tf->sec < 60)
-        return;
-    tf->sec = 0;
-
-    ++tf->min;
-    if (tf->min < 60)
-        return;
-    tf->min = 0;
-
-    ++tf->hr;
+void calc_hms(uint64_t ms, stopwatch* const w) {
+    w->hr  = ms / 3600000;
+    ms %= 3600000;
+    w->min = ms / 60000;
+    ms %= 60000;
+    w->sec = ms / 1000;
+    w->ms  = ms % 1000;
 }
 
-void print_time_format(const time_format tf) {
-    printf("\r%02lu:%02lu:%02lu.%02lu", tf.hr, tf.min, tf.sec, tf.cs);
+void print_time(const stopwatch w) {
+    printf("\r%02lu:%02lu:%02lu.%03lu", w.hr, w.min, w.sec, w.ms);
     fflush(stdout);
 }
 
-void* print_stopwatch(void* p_data) {
-    thread_data* const data = (thread_data*)p_data;
+uint64_t duration_ms(const struct timespec start, const struct timespec end) {
+    return (uint64_t)((end.tv_sec - start.tv_sec) * 1000
+            + (end.tv_nsec - start.tv_nsec) * 1e-6);
+}
 
+void stopwatch_quit(thread_data* const data) {
     pthread_mutex_lock(&data->mutex);
-    print_time_format(data->tf);
+    data->state.quit = true;
+    pthread_cond_signal(&data->cond);
     pthread_mutex_unlock(&data->mutex);
+}
+
+void stopwatch_start(thread_data* const data) {
+    pthread_mutex_lock(&data->mutex);
+
+    data->state.running = !data->state.running;
+    data->watch = (stopwatch){};
+
+    if (data->state.running) {
+        clock_gettime(CLOCK_MONOTONIC, &data->watch.start_time);
+        data->state.paused = false;
+        pthread_cond_signal(&data->cond);
+    }
+
+    pthread_mutex_unlock(&data->mutex);
+}
+
+void stopwatch_pause(thread_data* const data) {
+    pthread_mutex_lock(&data->mutex);
+
+    // resume
+    if (data->state.paused) {
+        data->state.paused = false;
+        data->state.running = true;
+        clock_gettime(CLOCK_MONOTONIC, &data->watch.start_time);
+        pthread_cond_signal(&data->cond);
+    }
+    // pause
+    else {
+        data->state.paused = true;
+        data->state.running = false;
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        data->watch.elapsed_ms += duration_ms(data->watch.start_time, now);
+    }
+
+    pthread_mutex_unlock(&data->mutex);
+}
+
+void* stopwatch_print(void* p_data) {
+    thread_data* const data = (thread_data*)p_data;
+    struct timespec now;
 
     while (true) {
         pthread_mutex_lock(&data->mutex);
 
-        if (!data->state.running) {
+        if (data->state.quit) {
             pthread_mutex_unlock(&data->mutex);
             break;
         }
 
-        if (data->state.stopped) {
-            // reset time
-            data->tf = (time_format){};
-            print_time_format(data->tf);
-
-            // thread wait
-            pthread_cond_wait(&data->cond_stop, &data->mutex);
+        if (!data->state.running) {
+            print_time(data->watch);
+            pthread_cond_wait(&data->cond, &data->mutex);
             pthread_mutex_unlock(&data->mutex);
             continue;
         }
 
-        // pthread_cond_timedwait takes absolute time
-        // i.e., block thread until a certain time (timestamp)
-        struct timespec tspec = {};
-        clock_gettime(CLOCK_MONOTONIC, &tspec);
-        tspec.tv_nsec += 1e7L; // wake up 1cs from now
-        if (tspec.tv_nsec >= 1e9L) {
-            tspec.tv_sec += 1L;
-            tspec.tv_nsec -= 1e9L;
-        }
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        uint64_t displayed_ms = 
+            duration_ms(data->watch.start_time, now)
+            + data->watch.elapsed_ms;
 
-        // pthread_cond_wait and pthread_cond_timedwait expects the 
-        // mutex to be locked, and they unlock the mutex after 
-        // suspending the thread, and lock the mutex before
-        // unsuspending the thread, so we have to manually unlock
-        // the mutex again
-        // 
-        // suspend thread for 1sec (or 1cs)
-        // this can be interrupted by another thread
-        pthread_cond_timedwait(&data->cond_sleep, &data->mutex, &tspec);
-
-        if (data->state.paused) {
-            // thread wait
-            pthread_cond_wait(&data->cond_pause, &data->mutex);
-            pthread_mutex_unlock(&data->mutex);
-            continue;
-        }
-
-        calc_hms(&data->tf);
-        print_time_format(data->tf);
+        calc_hms(displayed_ms, &data->watch);
+        print_time(data->watch);
 
         pthread_mutex_unlock(&data->mutex);
+
+        // sleep for 1ms
+        struct timespec t = { 0, 1e6 };
+        nanosleep(&t, NULL);
     }
 
+    printf("\n");
     return NULL;
 }

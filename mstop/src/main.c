@@ -7,33 +7,41 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "handlers.h"
 #include "mstop.h"
-
-#define TH_CHECK(x) \
-    if (x != 0) {\
-        perror("Error: Failed to create thread!\n");\
-        exit(1);\
-    }
- 
-#define TC_CHECK(x)\
-    if (x == -1) {\
-        perror("Error: Failed to access terminal state!\n");\
-        exit(1);\
-    }
 
 struct termios old_term_state = {};
 
+inline void th_check(int errcode) {
+    if (errcode != 0) {
+        perror("Error: Failed to create thread!\n");
+        exit(1);
+    }
+}
+ 
+inline void tc_check(int errcode) {
+    if (errcode == -1) {
+        perror("Error: Failed to access terminal state!\n");
+        exit(1);
+    }
+}
+
 void print_usage();
+void handle_sigint();
+void restore_terminal();
 
 int main(int argc, char** argv) {
-    program_state state = {
-        .running = true,
-        .paused  = false,
-        .stopped = true,
+    thread_data data = {
+        .state = {
+            .quit    = false,
+            .paused  = false,
+            .running = false,
+        },
+        .watch = {},
+        .mutex = PTHREAD_MUTEX_INITIALIZER,
+        .cond  = PTHREAD_COND_INITIALIZER,
     };
 
-    // by default, the terminal is set to run in canonical mode without echo
+    // by default, the terminal is set to run in non-canonical mode without echo
     bool normal_mode = false;
 
     for (int i = 1; i < argc; ++i) {
@@ -42,7 +50,8 @@ int main(int argc, char** argv) {
             exit(0);
         }
         else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--start") == 0) {
-            state.stopped = false;
+            data.state.running = true;
+            clock_gettime(CLOCK_MONOTONIC, &data.watch.start_time);
         }
         else if (strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--normal") == 0) {
             normal_mode = true;
@@ -57,70 +66,73 @@ int main(int argc, char** argv) {
     if (!normal_mode) {
         struct termios new_term_state = {}; 
         // save terminal state
-        TC_CHECK(tcgetattr(STDIN_FILENO, &old_term_state))
+        tc_check(tcgetattr(STDIN_FILENO, &old_term_state));
         new_term_state = old_term_state;
         // disable canonical mode and echo
         new_term_state.c_lflag &= ~(ICANON | ECHO);
         // apply new state
-        TC_CHECK(tcsetattr(STDIN_FILENO, TCSANOW, &new_term_state))
-
+        tc_check(tcsetattr(STDIN_FILENO, TCSANOW, &new_term_state));
         // register exit handler
         atexit(restore_terminal);
         // register SIGINT handler
         signal(SIGINT, handle_sigint);
     }
 
-    time_format tf = {};
-    thread_data data = {
-        .state        = state,
-        .tf           = tf,
-        .mutex        = PTHREAD_MUTEX_INITIALIZER,
-        .cond_pause   = PTHREAD_COND_INITIALIZER,
-        .cond_stop    = PTHREAD_COND_INITIALIZER,
-        .cond_sleep   = PTHREAD_COND_INITIALIZER,
-    };
-
     pthread_mutex_init(&data.mutex, NULL);
-    pthread_cond_init(&data.cond_pause, NULL);
-    pthread_cond_init(&data.cond_stop, NULL);
-
-    // use MONOTONIC clock
-    pthread_condattr_t attr;
-    pthread_condattr_init(&attr);
-    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
-    pthread_cond_init(&data.cond_sleep, &attr);
-    pthread_condattr_destroy(&attr);
+    pthread_cond_init(&data.cond, NULL);
 
     pthread_t th_stopw = {};
-    pthread_t th_input = {};
+    th_check(pthread_create(&th_stopw, NULL, stopwatch_print, (void*)&data));
 
-    TH_CHECK(pthread_create(&th_stopw, NULL, print_stopwatch, (void*)&data))
-    TH_CHECK(pthread_create(&th_input, NULL, handle_input,    (void*)&data))
+    char ch = {};
+    while (read(STDIN_FILENO, &ch, 1) > 0) {
+        // quit
+        if (ch == 'q') {
+            stopwatch_quit(&data);
+            break;
+        }
+        // start/reset
+        else if (ch == 's') {
+            stopwatch_start(&data);
+        }
+        // pause/resume
+        else if ((ch == 'p') || (ch == ' ')) {
+            stopwatch_pause(&data);
+        }
+    }
 
     pthread_join(th_stopw, NULL);
-    pthread_join(th_input, NULL);
-
-    pthread_cond_destroy(&data.cond_sleep);
-    pthread_cond_destroy(&data.cond_stop);
-    pthread_cond_destroy(&data.cond_pause);
+    pthread_cond_destroy(&data.cond);
     pthread_mutex_destroy(&data.mutex);
 
-    printf("\n");
     return 0;
 }
 
 void print_usage() {
-    printf("USAGE:\n    mstop [ -h | --help ] [ -s | --start ] [ -n | --normal ]\n");
-    printf("\nOPTIONS:\n");
-    printf("    --start,  -s : Immediately start the stopwatch.\n");
-    printf("    --normal, -n : To run the terminal normally i.e., disable canonical\n"
-           "                   mode, and enable echo. By default, the terminal is set\n"
-           "                   to run in canonical mode without echo. With this option,\n"
-           "                   you will have to press \"ENTER\" to perform an action\n"
-           "                   after a key input. Set this option if you have a non-UNIX\n"
-           "                   terminal.\n");
-    printf("\nKEY INPUT:\n");
-    printf("    s            : start/stop\n");
-    printf("    p or <space> : pause/resume\n");
-    printf("    q            : quit\n");
+    printf("USAGE:\n");
+    printf("    mstop [OPTIONS]\n\n");
+    printf("OPTIONS:\n");
+    printf("    -h, --help   : Show this help message and exit.\n");
+    printf("    -s, --start  : Start the stopwatch immediately.\n");
+    printf("    -n, --normal : Run the terminal in normal mode (canonical input with\n");
+    printf("                   echo). By default, the terminal is configured in\n");
+    printf("                   non-canonical mode without echo. Enabling this option\n");
+    printf("                   requires pressing ENTER after each key input. Use this\n");
+    printf("                   option if your terminal is non-UNIX or does not support\n");
+    printf("                   canonical mode.\n\n");
+    printf("KEY INPUTS:\n");
+    printf("    s            : Start or reset the stopwatch.\n");
+    printf("    p, <space>   : Pause or resume the stopwatch.\n");
+    printf("    q            : Quit the program.\n");
+}
+
+// handle SIGINT (Ctrl+C)
+void handle_sigint() {
+    restore_terminal();
+    printf("\n");
+    exit(0);
+}
+
+void restore_terminal() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_term_state);
 }

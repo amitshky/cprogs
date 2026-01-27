@@ -14,7 +14,7 @@ A simple CLI stopwatch written in C. This project uses `pthread` so it will prob
 ### Keyboard inputs
 |Key|Action|
 |:--|:--|
-|`s`|start/stop|
+|`s`|start/reset|
 |`p` or `<space>`|pause/resume|
 |`q`|quit|
 
