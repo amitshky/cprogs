@@ -53,14 +53,12 @@ void stopwatch_pause(thread_data* const data) {
     // resume
     if (data->state.pause) {
         data->state.pause = false;
-        data->state.start = true;
         clock_gettime(CLOCK_MONOTONIC, &data->watch.start_time);
         pthread_cond_signal(&data->cond);
     }
     // pause
     else {
         data->state.pause = true;
-        data->state.start = false;
         struct timespec now;
         clock_gettime(CLOCK_MONOTONIC, &now);
         data->watch.elapsed_ms += duration_ms(data->watch.start_time, now);
@@ -81,7 +79,7 @@ void* stopwatch_print(void* p_data) {
             break;
         }
 
-        if (!data->state.start) {
+        if (!data->state.start || data->state.pause) {
             print_time(data->watch);
             pthread_cond_wait(&data->cond, &data->mutex);
             pthread_mutex_unlock(&data->mutex);
