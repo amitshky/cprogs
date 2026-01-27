@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "mstop.h"
 
 #include <stdio.h>
@@ -33,12 +35,12 @@ void stopwatch_quit(thread_data* const data) {
 void stopwatch_start(thread_data* const data) {
     pthread_mutex_lock(&data->mutex);
 
-    data->state.running = !data->state.running;
+    data->state.start = !data->state.start;
     data->watch = (stopwatch){};
 
-    if (data->state.running) {
+    if (data->state.start) {
         clock_gettime(CLOCK_MONOTONIC, &data->watch.start_time);
-        data->state.paused = false;
+        data->state.pause = false;
         pthread_cond_signal(&data->cond);
     }
 
@@ -49,16 +51,16 @@ void stopwatch_pause(thread_data* const data) {
     pthread_mutex_lock(&data->mutex);
 
     // resume
-    if (data->state.paused) {
-        data->state.paused = false;
-        data->state.running = true;
+    if (data->state.pause) {
+        data->state.pause = false;
+        data->state.start = true;
         clock_gettime(CLOCK_MONOTONIC, &data->watch.start_time);
         pthread_cond_signal(&data->cond);
     }
     // pause
     else {
-        data->state.paused = true;
-        data->state.running = false;
+        data->state.pause = true;
+        data->state.start = false;
         struct timespec now;
         clock_gettime(CLOCK_MONOTONIC, &now);
         data->watch.elapsed_ms += duration_ms(data->watch.start_time, now);
@@ -79,7 +81,7 @@ void* stopwatch_print(void* p_data) {
             break;
         }
 
-        if (!data->state.running) {
+        if (!data->state.start) {
             print_time(data->watch);
             pthread_cond_wait(&data->cond, &data->mutex);
             pthread_mutex_unlock(&data->mutex);
@@ -88,8 +90,7 @@ void* stopwatch_print(void* p_data) {
 
         clock_gettime(CLOCK_MONOTONIC, &now);
         uint64_t displayed_ms = 
-            duration_ms(data->watch.start_time, now)
-            + data->watch.elapsed_ms;
+            duration_ms(data->watch.start_time, now) + data->watch.elapsed_ms;
 
         calc_hms(displayed_ms, &data->watch);
         print_time(data->watch);

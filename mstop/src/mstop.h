@@ -18,9 +18,9 @@ typedef struct {
 } stopwatch;
 
 typedef struct {
-    bool quit   : 1;
-    bool paused : 1;
-    bool running: 1;
+    bool quit : 1;
+    bool pause: 1;
+    bool start: 1;
 } program_state;
 
 typedef struct {

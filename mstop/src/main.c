@@ -34,8 +34,8 @@ void restore_terminal();
 int main(int argc, char** argv) {
     thread_data data = {
         .state = {
-            .quit    = false,
-            .pause  = false,
+            .quit  = false,
+            .pause = false,
             .start = false,
         },
         .watch = {},
