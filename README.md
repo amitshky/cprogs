@@ -7,7 +7,7 @@ Simple C programs.
 > **NOTE**: Also check the readme in the program directories for specific requirements for that program.
 
 ### Build and Configure
-- [gcc (v14 or higher)](https://gcc.gnu.org/)
+- [gcc (v14 or later)](https://gcc.gnu.org/)
 - [make](https://www.gnu.org/software/make/)
 - [bear](https://github.com/rizsotto/Bear)
 
