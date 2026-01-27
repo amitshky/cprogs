@@ -26,14 +26,14 @@ builddir:
 
 # debug build
 build: builddir
-	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) $(dbg_def) -g
+	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) $(dbg_def) $(cver) -g
 
 dbg: build
 	gdb -tui --args ./$(out_file)
 
 # release build
 release: builddir
-	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) -O3
+	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) $(cver) -O3
 
 install: release
 	cp $(out_file) $(install_dir)
