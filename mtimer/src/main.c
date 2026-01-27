@@ -1,10 +1,10 @@
-#include <stdio.h>
-#include <string.h>
+#include <locale.h> // for setlocale()
 #include <stdint.h> // for uint32_t, etc
+#include <stdio.h>
 #include <stdlib.h> // for exit(), free(), malloc()
+#include <string.h>
 #include <unistd.h> // for sleep()
 #include <wchar.h>
-#include <locale.h> // for setlocale()
 
 #include "timer.h"
 
@@ -13,9 +13,7 @@ void print_usage();
 int main(int argc, char** argv) {
     setlocale(LC_ALL, ""); // to be able to print the progress bar
 
-    timer t = {
-        .bar_len = 50
-    };
+    timer t = {.bar_len = 50};
 
     if (argc <= 1) {
         fprintf(stderr, "ERROR: No arguments provided.\n");
@@ -32,10 +30,11 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         // to store the number part of the arg (eg: store 45 from 45h)
         char num[33] = {};
-        for (int j = 0; argv[i][j] != '\0' ; ++j) {
+        for (int j = 0; argv[i][j] != '\0'; ++j) {
             if (j > 32) {
                 fprintf(stderr,
-                    "ERROR: Argument %d is too long. [Max length: 32]\n", i);
+                        "ERROR: Argument %d is too long. [Max length: 32]\n",
+                        i);
                 exit(1);
             }
 
@@ -45,11 +44,9 @@ int main(int argc, char** argv) {
 
                 if (argv[i][j] == 'h') {
                     t.h = atoi(num);
-                }
-                else if (argv[i][j] == 'm') {
+                } else if (argv[i][j] == 'm') {
                     t.m = atoi(num);
-                }
-                else if (argv[i][j] == 's') {
+                } else if (argv[i][j] == 's') {
                     t.s = atoi(num);
                 }
 
@@ -89,5 +86,20 @@ int main(int argc, char** argv) {
 }
 
 void print_usage() {
-    printf("Usage:\n\tmtimer [-h | --help] [ <num>h ] [ <num>m ] [ <num>s ]\n");
+    printf("USAGE:\n"
+           "    mtimer [OPTIONS] [<num>h] [<num>m] [<num>s]\n\n"
+           "OPTIONS:\n"
+           "    -h, --help       Show this help message and exit\n\n"
+           "TIME SPECIFICATION:\n"
+           "    Specify the timer duration using hours (h), minutes (m), and/or "
+           "seconds (s).\n"
+           "    At least one time unit must be provided.\n"
+           "    Examples:\n"
+           "      mtimer 3h 45m 23s   # 3 hours, 45 minutes, 23 seconds\n"
+           "      mtimer 90m          # 90 minutes\n"
+           "      mtimer 30s          # 30 seconds\n"
+           "      mtimer 1h 15s       # 1 hour, 15 seconds\n\n"
+           "NOTES:\n"
+           "    - Units can appear in any order.\n"
+           "    - Numbers must always be followed by their unit (h, m, or s).\n");
 }

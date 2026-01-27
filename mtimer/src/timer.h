@@ -22,4 +22,3 @@ void print_timer(const timer t);
 void calc_hms(timer* const t);
 
 #endif // TIMER_H
-

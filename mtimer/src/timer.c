@@ -1,7 +1,7 @@
 #include "timer.h"
 
-#include "stdio.h"
 #include "math.h"
+#include "stdio.h"
 
 float elapsed_percent(const timer t) {
     if (t.total == 0)
@@ -29,8 +29,8 @@ void print_timer(const timer t) {
     generate_progress_bar(t, percent);
 
     // %% is needed to print '%'
-    wprintf(L"\r%3uh %02um %02us %ls %3d%%",
-        t.h, t.m, t.s, t.progress_bar, (int)floor(percent));
+    wprintf(L"\r%3uh %02um %02us %ls %3d%%", t.h, t.m, t.s, t.progress_bar,
+            (int)floor(percent));
 
     // so that the timer is printed immediately
     fflush(stdout);
@@ -55,5 +55,6 @@ void calc_hms(timer* const t) {
         ++t->m;
     }
 
-    /*wprintf(L"  [(%5us) h: %u (%f), m: %u (%f), s: %u]", t->time, t->h, f_hr, t->m, f_min, t->s);*/
+    /*wprintf(L"  [(%5us) h: %u (%f), m: %u (%f), s: %u]", t->time, t->h, f_hr,
+   * t->m, f_min, t->s);*/
 }
