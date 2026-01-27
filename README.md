@@ -59,5 +59,5 @@ make clean_proj
 ## Programs
 | Name                | Description                  |
 | :------------------ | :--------------------------- |
-| [mtimer](./mtimer/) | A simple CLI countdown timer |
 | [mstop](./mstop/)   | A simple CLI stopwatch       |
+| [mtimer](./mtimer/) | A simple CLI countdown timer |
