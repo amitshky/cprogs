@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -11,14 +13,14 @@
 
 struct termios old_term_state = {};
 
-inline void th_check(int errcode) {
+static inline void th_check(int errcode) {
     if (errcode != 0) {
         perror("Error: Failed to create thread!\n");
         exit(1);
     }
 }
  
-inline void tc_check(int errcode) {
+static inline void tc_check(int errcode) {
     if (errcode == -1) {
         perror("Error: Failed to access terminal state!\n");
         exit(1);
@@ -26,15 +28,15 @@ inline void tc_check(int errcode) {
 }
 
 void print_usage();
-void handle_sigint();
+void handle_sigint(int sig);
 void restore_terminal();
 
 int main(int argc, char** argv) {
     thread_data data = {
         .state = {
             .quit    = false,
-            .paused  = false,
-            .running = false,
+            .pause  = false,
+            .start = false,
         },
         .watch = {},
         .mutex = PTHREAD_MUTEX_INITIALIZER,
@@ -50,7 +52,7 @@ int main(int argc, char** argv) {
             exit(0);
         }
         else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--start") == 0) {
-            data.state.running = true;
+            data.state.start = true;
             clock_gettime(CLOCK_MONOTONIC, &data.watch.start_time);
         }
         else if (strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--normal") == 0) {
@@ -75,7 +77,10 @@ int main(int argc, char** argv) {
         // register exit handler
         atexit(restore_terminal);
         // register SIGINT handler
-        signal(SIGINT, handle_sigint);
+        struct sigaction act = {0};
+        act.sa_handler = handle_sigint;
+        sigemptyset(&act.sa_mask);
+        sigaction(SIGINT, &act, NULL);
     }
 
     pthread_mutex_init(&data.mutex, NULL);
@@ -127,7 +132,8 @@ void print_usage() {
 }
 
 // handle SIGINT (Ctrl+C)
-void handle_sigint() {
+void handle_sigint(int sig) {
+    (void)sig;
     restore_terminal();
     printf("\n");
     exit(0);
