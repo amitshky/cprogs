@@ -8,7 +8,7 @@ include_dir = -I$(src_dir)
 src = $(shell find $(src_dir) -type f -wholename "$(src_dir)/*.c")
 out_file = $(build_dir)/$(proj_name)
 
-cflags := -Wall -Wextra -Werror
+cflags := -Wall -Wextra -Werror -Wconversion
 cver := -std=c23
 libflags := -lm
 dbg_def := -D_DEBUG
@@ -26,7 +26,7 @@ builddir:
 
 # debug build
 build: builddir
-	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) $(dbg_def) $(cver) -g
+	gcc -o $(out_file) $(src) $(cflags) $(libflags) $(include_dir) $(dbg_def) $(cver) -ggdb
 
 # release build
 release: builddir

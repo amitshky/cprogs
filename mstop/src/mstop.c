@@ -21,8 +21,8 @@ static inline void print_time(const stopwatch w) {
 
 static inline uint64_t duration_ms(const struct timespec start,
                                    const struct timespec end) {
-    return (uint64_t)((end.tv_sec - start.tv_sec) * 1000 +
-                      (end.tv_nsec - start.tv_nsec) * 1e-6);
+    return (uint64_t)((double)(end.tv_sec - start.tv_sec) * 1000 +
+                      (double)(end.tv_nsec - start.tv_nsec) * 1e-6);
 }
 
 void stopwatch_quit(thread_data* const data) {

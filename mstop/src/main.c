@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
         tc_check(tcgetattr(STDIN_FILENO, &old_term_state));
         new_term_state = old_term_state;
         // disable canonical mode and echo
-        new_term_state.c_lflag &= ~(ICANON | ECHO);
+        new_term_state.c_lflag &= (uint32_t)(~(ICANON | ECHO));
         // apply new state
         tc_check(tcsetattr(STDIN_FILENO, TCSANOW, &new_term_state));
         // register exit handler

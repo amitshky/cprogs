@@ -43,11 +43,11 @@ int main(int argc, char** argv) {
                 num[j] = '\0';
 
                 if (argv[i][j] == 'h') {
-                    t.h = atoi(num);
+                    t.h = (uint32_t)atoi(num);
                 } else if (argv[i][j] == 'm') {
-                    t.m = atoi(num);
+                    t.m = (uint32_t)atoi(num);
                 } else if (argv[i][j] == 's') {
-                    t.s = atoi(num);
+                    t.s = (uint32_t)atoi(num);
                 }
 
                 break;

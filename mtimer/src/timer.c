@@ -7,11 +7,11 @@ float elapsed_percent(const timer t) {
     if (t.total == 0)
         return 100.0f;
 
-    return 100.0f * (1.0f - (float)t.time / t.total);
+    return 100.0f * (1.0f - (float)t.time / (float)t.total);
 }
 
 void generate_progress_bar(const timer t, const float percent) {
-    uint32_t iter = t.bar_len * (percent / 100.0f);
+    uint32_t iter = (uint32_t)((float)t.bar_len * (percent / 100.0f));
 
     for (uint32_t i = 0; i < iter; ++i) {
         t.progress_bar[i] = L'█';
@@ -37,13 +37,13 @@ void print_timer(const timer t) {
 }
 
 void calc_hms(timer* const t) {
-    const float f_hr = t->time / 3600.0f;
+    const float f_hr = (float)t->time / 3600.0f;
     t->h = (uint32_t)f_hr;
 
-    const float f_min = (f_hr - t->h) * 60.0f;
+    const float f_min = (f_hr - (float)t->h) * 60.0f;
     t->m = (uint32_t)f_min;
 
-    t->s = (uint32_t)roundf((f_min - t->m) * 60.0f);
+    t->s = (uint32_t)roundf((f_min - (float)t->m) * 60.0f);
 
     // to avoid cases like this
     // 3h 37m 01s to 3h 36m 60s
