@@ -32,3 +32,11 @@ AlwaysBreakAfterReturnType: None
 # Misc
 SortIncludes: Never
 ReflowComments: false
+
+# Do NOT break string literals
+BreakStringLiterals: false
+
+# Prevent clang-format from bin-packing arguments in a way
+# that forces string splitting
+BinPackArguments: false
+BinPackParameters: false
